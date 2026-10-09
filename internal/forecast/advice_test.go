@@ -54,11 +54,11 @@ func TestAdvise(t *testing.T) {
 	}{
 		// Empty input
 		{
-			name:    "empty hours: returns empty advice and no error",
+			name:    "empty hours: returns empty advice and ErrNoHours",
 			hours:   []Hour{},
 			rules:   DefaultRules(),
 			want:    Advice{},
-			wantErr: nil,
+			wantErr: ErrNoHours,
 		},
 		// Standard trigger scenarios
 		{
