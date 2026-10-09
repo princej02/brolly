@@ -3,6 +3,7 @@ package forecast
 import (
 	"errors"
 	"fmt"
+	"math"
 	"time"
 )
 
@@ -103,6 +104,10 @@ func Advise(hours []Hour, r Rules) (Advice, error) {
 
 	if len(hours) == 0 {
 		return Advice{}, ErrNoHours
+	}
+
+	if math.IsNaN(r.JacketWindKmh) || r.JacketWindKmh < 0 {
+		return Advice{}, ErrInvalidRule
 	}
 
 	first := hours[0]

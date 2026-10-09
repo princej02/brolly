@@ -363,6 +363,25 @@ func TestAdvise(t *testing.T) {
 			if !adviceEq(advise, tc.want) {
 				t.Errorf("expected advice: %v, got: %v", tc.want, advise)
 			}
+
+			wantUmbrella := false
+			wantJacket := false
+			for _, tr := range tc.want.Triggers {
+				if tr.Rule == RuleUmbrella {
+					wantUmbrella = true
+				}
+				if tr.Rule == RuleJacketCold || tr.Rule == RuleJacketWind {
+					wantJacket = true
+				}
+			}
+
+			if got := advise.NeedsUmbrella(); got != wantUmbrella {
+				t.Errorf("NeedsUmbrella: got %v; want %v", got, wantUmbrella)
+			}
+
+			if got := advise.NeedsJacket(); got != wantJacket {
+				t.Errorf("NeedsJacket: got %v; want %v", got, wantJacket)
+			}
 		})
 	}
 }
@@ -412,6 +431,28 @@ func TestRules_Validate(t *testing.T) {
 			err := tc.rules.Validate()
 			if !errors.Is(err, tc.wantErr) {
 				t.Fatalf("expected error %v, got %v", tc.wantErr, err)
+			}
+		})
+	}
+}
+
+func TestRuleID_String(t *testing.T) {
+	testCases := []struct {
+		name string
+		id   RuleID
+		want string
+	}{
+		{name: "umbrella", id: RuleUmbrella, want: "Umbrella"},
+		{name: "jacket cold", id: RuleJacketCold, want: "JacketCold"},
+		{name: "jacket wind", id: RuleJacketWind, want: "JacketWind"},
+		{name: "unknown zero value", id: RuleUnknown, want: "RuleID(0)"},
+		{name: "out of range", id: RuleID(99), want: "RuleID(99)"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.id.String(); got != tc.want {
+				t.Errorf("RuleID(%d).String() = %q, want %q", tc.id, got, tc.want)
 			}
 		})
 	}
