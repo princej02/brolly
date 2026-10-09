@@ -60,7 +60,7 @@ func TestAdvise(t *testing.T) {
 			want:    Advice{},
 			wantErr: ErrNoHours,
 		},
-		// Standard trigger scenarios
+		// Standard trigger scenarios - peak severity
 		{
 			name: "umbrella only: rainy, but warm and calm",
 			hours: []Hour{
