@@ -78,6 +78,14 @@ func (a Advice) has(id RuleID) bool {
 	return false
 }
 
+func DefaultRules() Rules {
+	return Rules{
+		UmbrellaAtPct: 50,
+		JacketBelowC:  12,
+		JacketWindKmh: 30,
+	}
+}
+
 func Advise(hours []Hour, r Rules) (Advice, error) {
 	if len(hours) == 0 {
 		return Advice{}, ErrNoHours
