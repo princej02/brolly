@@ -136,14 +136,14 @@ func Advise(hours []Hour, r Rules) (Advice, error) {
 		triggers = append(triggers, Trigger{
 			Rule:      RuleJacketCold,
 			Threshold: r.JacketBelowC,
-			Observed: coldest.Value,
+			Observed:  coldest.Value,
 		})
 	}
 	if windiest.Value >= r.JacketWindKmh {
 		triggers = append(triggers, Trigger{
 			Rule:      RuleJacketWind,
 			Threshold: r.JacketWindKmh,
-			Observed: windiest.Value,
+			Observed:  windiest.Value,
 		})
 	}
 
