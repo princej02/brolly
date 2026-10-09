@@ -71,7 +71,7 @@ func TestAdvise(t *testing.T) {
 			rules: DefaultRules(),
 			want: Advice{
 				Triggers: []Trigger{
-					{Rule: RuleUmbrella, Threshold: 50, Observed: 60},
+					{Rule: RuleUmbrella, Threshold: 50, Observed: 70},
 				},
 				Rainiest: Peak[int]{At: at(1), Value: 70},
 				Windiest: Peak[float64]{At: at(0), Value: 24},
@@ -330,6 +330,17 @@ func TestAdvise(t *testing.T) {
 			want:    Advice{},
 			wantErr: ErrInvalidRule,
 		},
+		{
+			name:  "precedence: invalid rules takes precedence over empty hours",
+			hours: []Hour{},
+			rules: Rules{
+				UmbrellaAtPct: -1,
+				JacketBelowC:  12,
+				JacketWindKmh: 30,
+			},
+			want:    Advice{},
+			wantErr: ErrInvalidRule,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -351,6 +362,56 @@ func TestAdvise(t *testing.T) {
 
 			if !adviceEq(advise, tc.want) {
 				t.Errorf("expected advice: %v, got: %v", tc.want, advise)
+			}
+		})
+	}
+}
+
+func TestRules_Validate(t *testing.T) {
+	testCases := []struct {
+		name    string
+		rules   Rules
+		wantErr error
+	}{
+		{
+			name:    "valid default rules",
+			rules:   DefaultRules(),
+			wantErr: nil,
+		},
+		{
+			name: "invalid: negative umbrella percentage",
+			rules: Rules{
+				UmbrellaAtPct: -1,
+				JacketBelowC:  12,
+				JacketWindKmh: 30,
+			},
+			wantErr: ErrInvalidRule,
+		},
+		{
+			name: "invalid: umbrella percentage above 100",
+			rules: Rules{
+				UmbrellaAtPct: 101,
+				JacketBelowC:  12,
+				JacketWindKmh: 30,
+			},
+			wantErr: ErrInvalidRule,
+		},
+		{
+			name: "invalid: negative wind speed",
+			rules: Rules{
+				UmbrellaAtPct: 50,
+				JacketBelowC:  12,
+				JacketWindKmh: -10,
+			},
+			wantErr: ErrInvalidRule,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.rules.Validate()
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("expected error %v, got %v", tc.wantErr, err)
 			}
 		})
 	}

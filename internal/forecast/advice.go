@@ -86,10 +86,71 @@ func DefaultRules() Rules {
 	}
 }
 
+func (r Rules) Validate() error {
+	if r.UmbrellaAtPct < 0 || r.UmbrellaAtPct > 100 {
+		return ErrInvalidRule
+	}
+	if r.JacketWindKmh < 0 {
+		return ErrInvalidRule
+	}
+	return nil
+}
+
 func Advise(hours []Hour, r Rules) (Advice, error) {
+	if err := r.Validate(); err != nil {
+		return Advice{}, err
+	}
+
 	if len(hours) == 0 {
 		return Advice{}, ErrNoHours
 	}
 
-	return Advice{}, errors.New("not implemented")
+	first := hours[0]
+
+	rainiest := Peak[int]{Value: first.RainChancePct, At: first.At}
+	coldest := Peak[float64]{Value: first.TempC, At: first.At}
+	windiest := Peak[float64]{Value: first.WindKmh, At: first.At}
+
+	for _, h := range hours[1:] {
+		if h.RainChancePct > rainiest.Value {
+			rainiest = Peak[int]{Value: h.RainChancePct, At: h.At}
+		}
+		if h.TempC < coldest.Value {
+			coldest = Peak[float64]{Value: h.TempC, At: h.At}
+		}
+		if h.WindKmh > windiest.Value {
+			windiest = Peak[float64]{Value: h.WindKmh, At: h.At}
+		}
+	}
+
+	var triggers []Trigger
+
+	if rainiest.Value >= r.UmbrellaAtPct {
+		triggers = append(triggers, Trigger{
+			Rule:      RuleUmbrella,
+			Threshold: float64(r.UmbrellaAtPct),
+			Observed:  float64(rainiest.Value),
+		})
+	}
+	if coldest.Value < r.JacketBelowC {
+		triggers = append(triggers, Trigger{
+			Rule:      RuleJacketCold,
+			Threshold: r.JacketBelowC,
+			Observed: coldest.Value,
+		})
+	}
+	if windiest.Value >= r.JacketWindKmh {
+		triggers = append(triggers, Trigger{
+			Rule:      RuleJacketWind,
+			Threshold: r.JacketWindKmh,
+			Observed: windiest.Value,
+		})
+	}
+
+	return Advice{
+		Triggers: triggers,
+		Rainiest: rainiest,
+		Coldest:  coldest,
+		Windiest: windiest,
+	}, nil
 }
